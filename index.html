@@ -99,8 +99,14 @@
       window[callbackName] = function(data) {
         let message = data.message || "Server response received.";
 
-        if (data.name) message += "\nName: " + data.name;
-        if (data.id) message += "\nAlumni ID: " + data.id;
+if (data.name) message += "\nName: " + data.name;
+if (data.id) message += "\nAlumni ID: " + data.id;
+
+message += "\nRegistration Payment made: " +
+  (data.payment || "Not provided");
+
+message += "\nTransaction ID / Paid Reference No.: " +
+  (data.transaction || "Not provided");
 
         if (data.ok === true) {
           message = "SUCCESS — " + message;
