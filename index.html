@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alumni Reunion QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 560px;
+      margin: 20px auto;
+      padding: 16px;
+      color: #222;
+    }
+    h2 { color: #6b1830; }
+    button {
+      padding: 12px 18px;
+      margin: 8px 4px 8px 0;
+      background: #6b1830;
+      color: white;
+      border: 0;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    #reader { width: 100%; }
+    #result {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f1f1f1;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <h2>Alumni Reunion Check-in</h2>
+  <p>The New College · 28 November 2026</p>
+  <p>Tap Start Scanner and allow camera access.</p>
+
+  <div id="reader"></div>
+  <div id="result">Ready to scan.</div>
+
+  <button id="startBtn">Start Scanner</button>
+  <button id="stopBtn">Stop Scanner</button>
+
+  <script>
+    let scanner = null;
+    let busy = false;
+
+    const result = document.getElementById("result");
+
+    function show(message) {
+      result.textContent = message;
+    }
+
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      if (scanner && scanner.isScanning) return;
+
+      try {
+        show("Starting camera...");
+
+        if (!window.isSecureContext ||
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Camera unavailable. Open this site using its HTTPS link.");
+        }
+
+        if (typeof Html5Qrcode === "undefined") {
+          throw new Error("QR scanner library failed to load. Check your internet.");
+        }
+
+        if (!scanner) scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 230, height: 230 } },
+          async (decodedText) => {
+            if (busy) return;
+            busy = true;
+            await scanner.pause(true);
+            show("QR detected. Checking registration...");
+
+            // Backend connection will be added after the camera test.
+            show("QR detected:\n" + decodedText +
+                 "\n\nBackend connection is not configured yet.");
+
+            busy = false;
+            await scanner.resume();
+          },
+          () => {}
+        );
+
+        show("Camera ready. Point it at an alumni QR pass.");
+      } catch (error) {
+        show("Scanner error:\n" + (error.name || "Error") +
+             "\n" + (error.message || String(error)));
+      }
+    });
+
+    document.getElementById("stopBtn").addEventListener("click", async () => {
+      try {
+        if (scanner && scanner.isScanning) await scanner.stop();
+        show("Scanner stopped.");
+      } catch (error) {
+        show("Stop error: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
